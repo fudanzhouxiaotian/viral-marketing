@@ -1,1 +1,1 @@
-# viral-marketing
+# julia code for Viral Marketing Project
