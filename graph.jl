@@ -8,7 +8,7 @@ struct Graph_direct
     nbr_out :: Array{Array{Int32, 1}, 1}
 end
 
-include("core.jl")
+# include("core.jl")
 using Graphs
 
 
@@ -105,13 +105,50 @@ function get_graph_undirect(ffname)
         u1=u[i];
         v1=v[i];
         push!(nbr_out[u1],v1);
+        # push!(nbr_in[u1],v1);
         push!(nbr_in[v1],u1);
+        # push!(nbr_out[v1],u1);
     end
 
     close(fin)
     return Graph_direct(n, tot, u, v,nbr_in,nbr_out)
 end
 
+
+function backtype(GG)
+    n = 0
+    Label = Dict{Int32, Int32}()
+    Origin = Dict{Int32, Int32}()
+    getID(x :: Int) = haskey(Label, x) ? Label[x] : Label[x] = n += 1
+    m   = ne(GG)
+    u = Int32[]
+    v = Int32[]
+    tot = 0
+    for i in edges(GG)
+        x   = src(i)
+        y   = dst(i)
+        if x!=y
+            u1 = getID(x)
+            v1 = getID(y)
+            Origin[u1] = x
+            Origin[v1] = y
+            push!(u, u1)
+            push!(v, v1)
+            push!(u, v1)
+            push!(v, u1)
+            tot += 2
+        end
+    end
+    nbr_in=[ Int32[ ] for i in 1:n ]
+    nbr_out=[ Int32[ ] for i in 1:n ]
+    for i=1:tot
+        u1=u[i];
+        v1=v[i];
+        push!(nbr_out[u1],v1);
+        push!(nbr_in[v1],u1);
+    end
+    return Graph_direct(n, tot, u, v,nbr_in,nbr_out)
+end
 
 function turntype(G)
     g = SimpleDiGraph(G.n)
@@ -120,3 +157,39 @@ function turntype(G)
     end
     return g;
 end
+
+function get_new(G,max_comp)
+    n = 0
+    Label = Dict{Int32, Int32}()
+    Origin = Dict{Int32, Int32}()
+    #E = Set{Tuple{Int32, Int32, Float32}}()
+
+    getID(x :: Int32) = haskey(Label, x) ? Label[x] : Label[x] = n += 1
+    m   = G.m
+    u = Int32[]
+    v = Int32[]
+
+    tot = 0
+    for i = 1 : m
+        x   = G.u[i]
+        y   = G.v[i]
+        if (x in max_comp) && (y in max_comp)
+            u1 = getID(x)
+            v1 = getID(y)
+            Origin[u1] = x
+            Origin[v1] = y
+            push!(u, u1)
+            push!(v, v1)
+            tot += 1
+        end
+    end
+    nbr_in=[ Int32[ ] for i in 1:n ]
+    nbr_out=[ Int32[ ] for i in 1:n ]
+    for i=1:tot
+        u1=u[i];
+        v1=v[i];
+        push!(nbr_out[u1],v1);     
+        push!(nbr_in[v1],u1);
+    end
+    return Graph_direct(n, tot, u, v,nbr_in,nbr_out)
+end   
